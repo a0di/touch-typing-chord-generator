@@ -1,0 +1,13 @@
+{
+  "thumbLeft": ["Space", "Alt", "Command", "Option"],
+  "thumbRight": ["Space"],
+  "indexFingerLeft": ["U", "I", "D", "H", "G", "C", "4", "5"],
+  "indexFingerRight": ["E", "O", "N", "T", "S", "-", "6", "7"],
+  "middleFingerLeft": ["X", "J", "B", "3"],
+  "middleFingerRight": ["K", "Y", "F", "8"],
+  "ringFingerLeft": ["Q", "A", "Z", "2"],
+  "ringFingerRight": ["P", "R", "L", "9"],
+  "pinkyFingerLeft": ["'", ",", ".", "1", "Shift", "Tab", "CapsLock"],
+  "pinkyFingerRight": [";", "Q", "J", "K", "X", "Shift", "Enter", "Backspace"]
+}
+
