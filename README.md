@@ -10,6 +10,14 @@ Chords are essential to reach high typing speeds above 60 wpm.
 - input it to the tool like monkeytype or keybr
 
 ## Customization
+### Repeated chords
+Chords in the output can be repeated as many times as you specify, to aid learning and muscle memory.
+
+### Blacklist
+Blacklist contains combos that are too awkward and if the chord contains any blacklisted combo it will be omitted.
+
+### Chord lengths
+You can define a range of desired chord lengths.
 
 ## Alternative layouts
 
