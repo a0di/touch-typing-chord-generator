@@ -21,6 +21,7 @@ type params struct {
 	shuffle         string
 }
 
+
 func getLayoutAsMap(file string) (layout map[string][]string) {
 	// Open the file
 	layout = make(map[string][]string)
@@ -40,6 +41,7 @@ func getLayoutAsMap(file string) (layout map[string][]string) {
 	}
 	return
 }
+
 
 func getWords() (wordlist []string) {
 	// Open the file
@@ -63,16 +65,44 @@ func getWords() (wordlist []string) {
 	return
 }
 
+
+func getBlacklist() (wordlist []string) {
+	// Open the file
+	file, err := os.Open("wordlists/blacklist.txt")
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
+	defer file.Close()
+
+	// Read the file
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		wordlist = append(wordlist, scanner.Text())
+	}
+
+	// Check for errors
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Error: ", err)
+	}
+	return
+}
+
+
 // ideas for more checks:
 // - repeated keys as separate chords
 // - calculate distance between keys
 
-func contains(slice []string, key string) bool {
+func contains(slice []string, keys string) bool {
+  // Split string into characters
+  k := strings.Split(keys, "")
 	// Check if the key is in the slice
 	for _, value := range slice {
-		if value == key {
-			return true
-		}
+    for _, key := range k {
+      if value == key {
+        return true
+      }
+    }
 	}
 	return false
 }
@@ -84,7 +114,7 @@ func checkIfChordEnds(currentKey string, nextKey string, layout Layout) bool {
 
 	// Convert the keys to uppercase, take last character
 	currentKey = strings.ToUpper(currentKey)
-	currentKey = string(currentKey[len(currentKey)-1])
+	// currentKey = string(currentKey[len(currentKey)-1])
 	nextKey = strings.ToUpper(nextKey)
 
 	for _, finger := range layout {
@@ -96,6 +126,7 @@ func checkIfChordEnds(currentKey string, nextKey string, layout Layout) bool {
 	return result
 }
 
+
 func transformLayoutFromMap(layout map[string][]string) Layout {
 	// Transform the layout from map to Layout type
 	result := Layout{}
@@ -106,9 +137,20 @@ func transformLayoutFromMap(layout map[string][]string) Layout {
 	return result
 }
 
-func splitWordToChords(layout map[string][]string, word string, params params) []string {
+
+func isChordInBlacklist(chord string, blacklist []string) bool {
+  for _, item := range blacklist {
+    if strings.Contains(strings.ToUpper(chord), strings.ToUpper(item)) {
+      return true
+    }
+  }
+  return false
+}
+
+
+func splitWordToChords(layout map[string][]string, word string, params params, blacklist []string) []string {
 	// A chord is a combination of keys that are pressed at the same time
-	// Chord cannot be two keys that are assigned to the same finger
+	// Chord cannot contain two keys that are assigned to the same finger
 	chords := []string{}
 	transformedLayout := transformLayoutFromMap(layout)
 
@@ -116,21 +158,20 @@ func splitWordToChords(layout map[string][]string, word string, params params) [
 
 	for i := 1; i < len(word); i++ {
 		nextKey := string(word[i])
-		// Check if the chord ends
+
 		if checkIfChordEnds(currentKey, nextKey, transformedLayout) || len(currentKey) >= params.maxChordLen {
-			// If it does, append the chord to the result and start a new one
-			if len(currentKey) >= params.minChordLen {
+			if len(currentKey) >= params.minChordLen && !isChordInBlacklist(currentKey, blacklist) {
 				for j := 0; j < params.repeatChords; j++ {
 					chords = append(chords, currentKey)
 				}
 			}
 			currentKey = nextKey
 		} else {
-			// If it doesn't, add the key to the current chord
 			currentKey += nextKey
 		}
 	}
-	if len(currentKey) >= params.minChordLen {
+
+	if len(currentKey) >= params.minChordLen && !isChordInBlacklist(currentKey, blacklist) {
 		for j := 0; j < params.repeatChords; j++ {
 			chords = append(chords, currentKey)
 		}
@@ -138,6 +179,7 @@ func splitWordToChords(layout map[string][]string, word string, params params) [
 
 	return chords
 }
+
 
 func getParams() params {
 	// Get the parameters from the user
@@ -147,7 +189,7 @@ func getParams() params {
 	var repeatChords int
 	var shuffle string
 
-	fmt.Println("Which layout would you like to use?")
+	fmt.Println("Which layout would you like to use? (default 0 - QWERTY)")
 	fmt.Println("0 - QWERTY")
 	fmt.Println("1 - Dvorak")
 	fmt.Println("x - Custom")
@@ -156,7 +198,7 @@ func getParams() params {
 	fmt.Println("Enter the minimum chord length: (default 2)")
 	fmt.Scanln(&minChordLength)
 
-	fmt.Println("Enter the maximum chord length: (default 4)")
+	fmt.Println("Enter the maximum chord length: (default 8)")
 	fmt.Scanln(&maxChordLength)
 
 	fmt.Println("Enter how many times to repeat the chords (default 1)")
@@ -173,7 +215,7 @@ func getParams() params {
 		minChordLength = 2
 	}
 	if maxChordLength == 0 {
-		maxChordLength = 4
+		maxChordLength = 8
 	}
 	if repeatChords == 0 {
 		repeatChords = 1
@@ -185,6 +227,20 @@ func getParams() params {
 	return params{layoutSelection, minChordLength, maxChordLength, repeatChords, shuffle}
 }
 
+
+func outputToFile(filename string, values []string) error {
+  f, err := os.Create(filename)
+  if err != nil {
+      return err
+  }
+  defer f.Close()
+  for _, value := range values {
+      fmt.Fprintln(f, value)
+  }
+  return nil
+}
+
+
 func main() {
 	var layout map[string][]string
 	var result []string
@@ -192,22 +248,28 @@ func main() {
 	// Get the parameters from the user
 	params := getParams()
 
-	// If custom, ask to enter the keys row by row, every row ends with space
-	if params.layoutSelection == "x" {
+  // Select layout
+  switch params.layoutSelection {
+  case "0":
+		layout = getLayoutAsMap("layouts/qwerty.json")
+  case "1":
+		layout = getLayoutAsMap("layouts/dvorak.json")
+  case "x":
 		// Custom layout should be in a file e.g. custom.txt
 		// Ask the user to enter the file name
 		fmt.Println("Enter the file name for the custom layout: ")
 		var custom_layout string
 		fmt.Scanln(&custom_layout)
-	}
-
-	// If qwerty, get the qwerty layout from file
-	if params.layoutSelection == "0" {
-		layout = getLayoutAsMap("layouts/qwerty.json")
-	}
+  default:
+    fmt.Println("Unknown layout")
+    return
+  }
 
 	// Get the chords based on the layout and file list
 	wordlist := getWords()
+
+  // Get the blacklist
+  blacklist := getBlacklist()
 
 	// Shuffle array if needed
 	if params.shuffle == "y" {
@@ -218,8 +280,11 @@ func main() {
 
 	// Iterate over the word list and get the chords
 	for _, word := range wordlist {
-		chords := splitWordToChords(layout, word, params)
+		chords := splitWordToChords(layout, word, params, blacklist)
 		result = append(result, chords...)
 	}
-	fmt.Println(result)
+
+	// fmt.Println(result)
+  outputToFile("out.txt", result)
+  fmt.Println("Number of chords found: ", len(result) / params.repeatChords)
 }
