@@ -1,15 +1,20 @@
 # Touch typing chord generator
 Generate chords for touch typing practice for QWERTY or alternative layouts.
-A chord is a combination of keys that are pressed almost simultaneously.
+
+A chord is a combination of keys that are pressed almost simultaneously when typing.
 Chords are essential to reach high typing speeds above 60 wpm.
 
 ## Installation
 
 ## Usage
-- generate the list of chords
-- input it to the tool like monkeytype or keybr
+- generate the list of chords using this tool
+- input the result to the tool like [monkeytype](https://monkeytype.com/) or [keybr](https://www.keybr.com/)
+- practice, practice, practice!
 
 ## Customization
+### Input text
+By default it uses the list of 1k most common words, but you can provide your own list as an input.
+
 ### Repeated chords
 Chords in the output can be repeated as many times as you specify, to aid learning and muscle memory.
 
