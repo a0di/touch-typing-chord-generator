@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
-  "math/rand"
 )
 
 // Type for layout where fingers are numbers instead of strings -> array of string arrays
@@ -20,7 +20,6 @@ type params struct {
 	repeatChords    int
 	shuffle         string
 }
-
 
 func getLayoutAsMap(file string) (layout map[string][]string) {
 	// Open the file
@@ -41,7 +40,6 @@ func getLayoutAsMap(file string) (layout map[string][]string) {
 	}
 	return
 }
-
 
 func getWords() (wordlist []string) {
 	// Open the file
@@ -65,7 +63,6 @@ func getWords() (wordlist []string) {
 	return
 }
 
-
 func getBlacklist() (wordlist []string) {
 	// Open the file
 	file, err := os.Open("wordlists/blacklist.txt")
@@ -88,21 +85,20 @@ func getBlacklist() (wordlist []string) {
 	return
 }
 
-
 // ideas for more checks:
 // - repeated keys as separate chords
 // - calculate distance between keys
 
 func contains(slice []string, keys string) bool {
-  // Split string into characters
-  k := strings.Split(keys, "")
+	// Split string into characters
+	k := strings.Split(keys, "")
 	// Check if the key is in the slice
 	for _, value := range slice {
-    for _, key := range k {
-      if value == key {
-        return true
-      }
-    }
+		for _, key := range k {
+			if value == key {
+				return true
+			}
+		}
 	}
 	return false
 }
@@ -126,7 +122,6 @@ func checkIfChordEnds(currentKey string, nextKey string, layout Layout) bool {
 	return result
 }
 
-
 func transformLayoutFromMap(layout map[string][]string) Layout {
 	// Transform the layout from map to Layout type
 	result := Layout{}
@@ -137,16 +132,14 @@ func transformLayoutFromMap(layout map[string][]string) Layout {
 	return result
 }
 
-
 func isChordInBlacklist(chord string, blacklist []string) bool {
-  for _, item := range blacklist {
-    if strings.Contains(strings.ToUpper(chord), strings.ToUpper(item)) {
-      return true
-    }
-  }
-  return false
+	for _, item := range blacklist {
+		if strings.Contains(strings.ToUpper(chord), strings.ToUpper(item)) {
+			return true
+		}
+	}
+	return false
 }
-
 
 func splitWordToChords(layout map[string][]string, word string, params params, blacklist []string) []string {
 	// A chord is a combination of keys that are pressed at the same time
@@ -179,7 +172,6 @@ func splitWordToChords(layout map[string][]string, word string, params params, b
 
 	return chords
 }
-
 
 func getParams() params {
 	// Get the parameters from the user
@@ -227,19 +219,17 @@ func getParams() params {
 	return params{layoutSelection, minChordLength, maxChordLength, repeatChords, shuffle}
 }
 
-
 func outputToFile(filename string, values []string) error {
-  f, err := os.Create(filename)
-  if err != nil {
-      return err
-  }
-  defer f.Close()
-  for _, value := range values {
-      fmt.Fprintln(f, value)
-  }
-  return nil
+	f, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	for _, value := range values {
+		fmt.Fprintln(f, value)
+	}
+	return nil
 }
-
 
 func main() {
 	var layout map[string][]string
@@ -248,28 +238,28 @@ func main() {
 	// Get the parameters from the user
 	params := getParams()
 
-  // Select layout
-  switch params.layoutSelection {
-  case "0":
+	// Select layout
+	switch params.layoutSelection {
+	case "0":
 		layout = getLayoutAsMap("layouts/qwerty.json")
-  case "1":
+	case "1":
 		layout = getLayoutAsMap("layouts/dvorak.json")
-  case "x":
+	case "x":
 		// Custom layout should be in a file e.g. custom.txt
 		// Ask the user to enter the file name
 		fmt.Println("Enter the file name for the custom layout: ")
 		var custom_layout string
 		fmt.Scanln(&custom_layout)
-  default:
-    fmt.Println("Unknown layout")
-    return
-  }
+	default:
+		fmt.Println("Unknown layout")
+		return
+	}
 
 	// Get the chords based on the layout and file list
 	wordlist := getWords()
 
-  // Get the blacklist
-  blacklist := getBlacklist()
+	// Get the blacklist
+	blacklist := getBlacklist()
 
 	// Shuffle array if needed
 	if params.shuffle == "y" {
@@ -285,6 +275,6 @@ func main() {
 	}
 
 	// fmt.Println(result)
-  outputToFile("out.txt", result)
-  fmt.Println("Number of chords found: ", len(result) / params.repeatChords)
+	outputToFile("out.txt", result)
+	fmt.Println("Number of chords found: ", len(result)/params.repeatChords)
 }
