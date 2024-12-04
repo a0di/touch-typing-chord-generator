@@ -5,25 +5,14 @@ import (
     "os"
     "bufio"
     "encoding/json"
+    "strings"
 )
 
-/* layout looks like this
-{
-  "thumbLeft": ["Space", "Alt", "Command", "Option"],
-  "thumbRight": ["Space"],
-  "indexFingerLeft": ["R", "T", "F", "G", "V", "B", "4", "5"],
-  "indexFingerRight": ["Y", "U", "H", "J", "N", "M", "6", "7"],
-  "middleFingerLeft": ["E", "D", "C", "3"],
-  "middleFingerRight": ["I", "K", ",", "8"],
-  "ringFingerLeft": ["W", "S", "X", "2"],
-  "ringFingerRight": ["O", "L", ".", "9"],
-  "pinkyFingerLeft": ["Q", "A", "Z", "1", "Shift", "Tab", "CapsLock"],
-  "pinkyFingerRight": ["P", ";", "/", "-", "=", "[", "]", "\\", "Shift", "Enter", "Backspace"]
-}
-*/
+// Type for layout where fingers are numbers instead of strings -> array of string arrays
+type Layout [][]string
 
-// Get the layout from json file based on layout above and store as a map
-func getLayout(file string) (layout map[string][]string) {
+
+func getLayoutAsMap(file string) (layout map[string][]string) {
   // Open the file
   layout = make(map[string][]string)
   jsonFile, err := os.Open(file)
@@ -43,10 +32,10 @@ func getLayout(file string) (layout map[string][]string) {
   return
 }
 
-// Get the word list from file
+
 func getWords() (wordlist []string) {
   // Open the file
-  file, err := os.Open("wordlists/common-words100.txt")
+  file, err := os.Open("wordlists/common1000.txt")
   if err != nil {
     fmt.Println("Error: ", err)
     return
@@ -66,32 +55,128 @@ func getWords() (wordlist []string) {
   return
 }
 
+// ideas for more checks:
+// - repeated keys as separate chords
+// - calculate distance between keys
 
-func getAdjacentKeys(layout[] string, key string) {
-
+func contains(slice []string, key string) bool {
+  // Check if the key is in the slice
+  for _, value := range slice {
+    if value == key {
+      return true
+    }
+  }
+  return false
 }
 
 
-func splitWordToChords(layout[] string, word string) {
+func checkIfChordEnds(currentKey string, nextKey string, layout Layout) bool {
+  // Check if the current key and next key are assigned to the same finger byt checking layout
+  // If they are, the chord ends
+  result := false
+
+  // Convert the keys to uppercase, take last character
+  currentKey = strings.ToUpper(currentKey)
+  currentKey = string(currentKey[len(currentKey)-1])
+  nextKey = strings.ToUpper(nextKey)
+
+  for _, finger := range layout {
+    if contains(finger, currentKey) && contains(finger, nextKey) {
+      result = true
+      break
+    }
+  }
+  return result
+}
+
+
+func transformLayoutFromMap(layout map[string][]string) Layout {
+  // Transform the layout from map to Layout type
+  result := Layout{}
+  // Iterate over the map and append the values to the result
+  for _, value := range layout {
+    result = append(result, value)
+  }
+  return result
+}
+
+
+func splitWordToChords(layout map[string][]string, word string, minChordLen int, maxChordLen int) []string {
   // A chord is a combination of keys that are pressed at the same time
   // Chord cannot be two keys that are assigned to the same finger
+  chords := []string{}
+  transformedLayout := transformLayoutFromMap(layout)
+
+  // Always take the first key as the start of the chord
+  currentKey := string(word[0])
+  // Iterate over the word and check if the chord ends
+  for i := 1; i < len(word); i++ {
+    nextKey := string(word[i])
+    // Check if the chord ends
+    if checkIfChordEnds(currentKey, nextKey, transformedLayout) || len(currentKey) >= maxChordLen {
+      // If it does, append the chord to the result and start a new one
+      // If the chord is too short, don't append it
+      if len(currentKey) >= minChordLen {
+        chords = append(chords, currentKey)
+      }
+      currentKey = nextKey
+    } else {
+      // If it doesn't, add the key to the current chord
+      currentKey += nextKey
+    }
+  }
+  if len(currentKey) >= minChordLen {
+    chords = append(chords, currentKey)
+  }
+
+  return chords
 }
 
+type params struct {
+  layoutSelection string
+  minChordLength int
+  MaxChordLength int
+}
 
-func main() {
+func getParams() (params) {
+  // Get the parameters from the user
   var layoutSelection string
+  var minChordLength int
+  var maxChordLength int
 
-  // Prompt the user which layout to use, 0 - qwerty, 1 - dvorak, x -custom
   fmt.Println("Which layout would you like to use?")
   fmt.Println("0 - QWERTY")
   fmt.Println("1 - Dvorak")
   fmt.Println("x - Custom")
-
   fmt.Scanln(&layoutSelection)
-  fmt.Println("You selected: ", layoutSelection)
+  fmt.Println("Enter the minimum chord length: ")
+  fmt.Scanln(&minChordLength)
+  fmt.Println("Enter the maximum chord length: ")
+  fmt.Scanln(&maxChordLength)
+
+  // Set default vals if no input
+  if len(layoutSelection) == 0 {
+    layoutSelection = "0"
+  }
+  if minChordLength == 0 {
+    minChordLength = 2
+  }
+  if maxChordLength == 0 {
+    maxChordLength = 4
+  }
+
+  return params{layoutSelection, minChordLength, maxChordLength}
+}
+
+func main() {
+  var layout map[string][]string
+  var result []string
+
+  // Get the parameters from the user
+  params := getParams()
 
   // If custom, ask to enter the keys row by row, every row ends with space
-  if layoutSelection == "x" {
+  if params.layoutSelection == "x" {
     // Custom layout should be in a file e.g. custom.txt
     // Ask the user to enter the file name
     fmt.Println("Enter the file name for the custom layout: ")
@@ -100,11 +185,17 @@ func main() {
   }
 
   // If qwerty, get the qwerty layout from file
-  if layoutSelection == "0" {
-    layout := getLayout("layouts/qwerty.json")
-    fmt.Println("QWERTY layout selected")
-    fmt.Println(layout)
+  if params.layoutSelection == "0" {
+    layout = getLayoutAsMap("layouts/qwerty.json")
   }
 
   // Get the chords based on the layout and file list
+  wordlist := getWords()
+
+  // Iterate over the word list and get the chords
+  for _, word := range wordlist {
+    chords := splitWordToChords(layout, word, params.minChordLength, params.MaxChordLength)
+    result = append(result, chords...)
+  }
+  fmt.Println(result)
 }
