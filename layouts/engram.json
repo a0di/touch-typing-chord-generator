@@ -1,0 +1,12 @@
+{
+  "pinkyFingerLeft": ["Q", "J", "Z", "1"],
+  "ringFingerLeft": ["W", "F", "X", "2"],
+  "middleFingerLeft": ["U", "P", "C", "3"],
+  "indexFingerLeft": ["O", "L", "D", "R", "V", "4", "5"],
+  "thumbLeft": [" "],
+  "thumbRight": [" "],
+  "indexFingerRight": ["Y", "N", "T", "S", "G", "6", "7"],
+  "middleFingerRight": ["I", "E", "K", ",", "8"],
+  "ringFingerRight": ["A", "H", "M", ".", "9"],
+  "pinkyFingerRight": [";", "Q", "/", "-", "=", "[", "]", "\\"]
+}
