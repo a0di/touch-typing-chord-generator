@@ -1,5 +1,5 @@
 # Touch typing chord generator
-Generate chords for touch typing practice for QWERTY or alternative layouts based on 1000 most common words or custom wordlists.
+Generate chords (bigrams, trigrams, etc.) for touch typing practice for QWERTY or alternative layouts based on 1000 most common words or custom wordlists.
 
 > A chord is a combination of keys that are pressed almost simultaneously when typing.
 
