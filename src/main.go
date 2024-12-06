@@ -30,9 +30,9 @@ func getLayoutAsMap(file string) (layout map[string][]string) {
 }
 
 // Read the word list from a file
-func getWords() (wordlist []string) {
+func getWords(wordlistFile string) (wordlist []string) {
 	// Open the file
-	file, err := os.Open("wordlists/common1000.txt")
+	file, err := os.Open(wordlistFile)
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return
@@ -80,14 +80,18 @@ func getBlacklist(filename string) (wordlist []string) {
 }
 
 // Output the found chords to a file
-func outputToFile(filename string, values []string) error {
+func outputToFile(filename string, values []string, delimSpace bool) error {
 	f, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 	for _, value := range values {
-		fmt.Fprintln(f, value)
+		if delimSpace == false {
+			fmt.Fprintln(f, value)
+		} else {
+			fmt.Fprint(f, value+" ")
+		}
 	}
 	return nil
 }
@@ -95,6 +99,7 @@ func outputToFile(filename string, values []string) error {
 func main() {
 	var layoutJSON string
 	var layout map[string][]string
+	var wordlist []string
 	var result []string
 	outFileName := "output.txt"
 
@@ -141,8 +146,12 @@ func main() {
 		return
 	}
 
-	// Get the chords based on the layout and file list
-	wordlist := getWords()
+	// Get the wordlist
+	if params.wordlistFile == "" {
+		wordlist = getWords("wordlists/common1000.txt")
+	} else {
+		wordlist = getWords(params.wordlistFile)
+	}
 
 	// Get the blacklist based on basename of path to layout
 	blacklist := getBlacklist("blacklists/" + layoutJSON[8:len(layoutJSON)-5] + ".txt")
@@ -160,7 +169,7 @@ func main() {
 		result = append(result, chords...)
 	}
 
-	outputToFile(outFileName, result)
+	outputToFile(outFileName, result, params.delimiterSpace)
 	fmt.Println("Number of chords found: ", len(result)/params.repeatChords)
 	fmt.Println("Output saved to: ", outFileName)
 }
