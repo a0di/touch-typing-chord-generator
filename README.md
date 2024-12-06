@@ -1,10 +1,16 @@
 # Touch typing chord generator
-Generate chords for touch typing practice for QWERTY or alternative layouts.
+Generate chords for touch typing practice for QWERTY or alternative layouts based on 1000 most common words or custom wordlists.
 
-A chord is a combination of keys that are pressed almost simultaneously when typing.
-Chords are essential to reach high typing speeds above 60 wpm.
+> A chord is a combination of keys that are pressed almost simultaneously when typing.
+
+Chords are essential to reach high typing speeds of 60 wpm and above.
+This tool allows to generate chords of any lengths (2, 3, 4 keys etc.).
 
 ## Installation
+```
+go build ./src/*
+./chord_picker --help
+```
 
 ## Usage
 - generate the list of chords using this tool
