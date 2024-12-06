@@ -1,8 +1,11 @@
-package chord_picker
+package main
 
 import (
 	"strings"
 )
+
+// Type for layout where fingers are numbered starting from left pinky
+type Layout [][]string
 
 // Check if the slice contains the keys
 func contains(slice []string, keys string) bool {
@@ -56,7 +59,7 @@ func isChordInBlacklist(chord string, blacklist []string) bool {
 }
 
 // Split the word into chords based on the layout
-func SplitWordToChords(layout map[string][]string, word string, params params, blacklist []string) []string {
+func SplitWordToChords(layout map[string][]string, word string, params Params, blacklist []string) []string {
 	// A chord is a combination of keys that are pressed at the same time
 	// Chord cannot contain two keys that are assigned to the same finger
 	chords := []string{}
